@@ -47,37 +47,63 @@ const Index = () => {
 
     setLoading(true);
     
-    // Simulate API call - replace with actual endpoint
-    setTimeout(() => {
-      const mockData: PlanData = {
-        best_free: [
-          { title: "Introduction to Data Analysis", price: 0, salary_delta_est: 15000, duration: "6 weeks", provider: "Coursera" },
-          { title: "SQL for Data Science", price: 0, salary_delta_est: 12000, duration: "4 weeks", provider: "Udacity" },
-          { title: "Python Data Science Basics", price: 0, salary_delta_est: 18000, duration: "8 weeks", provider: "edX" },
-        ],
-        best_paid: [
-          { title: "Advanced Data Analytics Professional", price: 299, salary_delta_est: 35000, duration: "12 weeks", provider: "DataCamp" },
-          { title: "Data Analyst Nanodegree", price: 399, salary_delta_est: 40000, duration: "16 weeks", provider: "Udacity" },
-          { title: "Business Analytics Specialization", price: 249, salary_delta_est: 28000, duration: "10 weeks", provider: "Coursera" },
-        ],
-        plan_weeks: [
-          { week: 1, tasks: ["Complete SQL basics module", "Set up Python environment", "Review statistics fundamentals"] },
-          { week: 2, tasks: ["Data cleaning with Pandas", "Basic visualization with Matplotlib", "Practice datasets analysis"] },
-          { week: 3, tasks: ["Advanced SQL queries", "Data transformation techniques", "Real-world project 1"] },
-          { week: 4, tasks: ["Statistical analysis methods", "Hypothesis testing", "A/B testing fundamentals"] },
-          { week: 5, tasks: ["Dashboard creation", "Tableau/Power BI basics", "Data storytelling"] },
-          { week: 6, tasks: ["Machine learning introduction", "Predictive modeling basics", "Real-world project 2"] },
-          { week: 7, tasks: ["Advanced Python libraries", "Big data concepts", "Cloud platforms overview"] },
-          { week: 8, tasks: ["Portfolio project", "Interview preparation", "Resume optimization"] },
-        ],
-      };
-      setData(mockData);
-      setLoading(false);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-learning-plan`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            skill: skill.trim(),
+            hours_per_week: hours[0],
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 429) {
+          toast({
+            title: "Rate Limit Reached",
+            description: "Too many requests. Please wait a moment and try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (response.status === 402) {
+          toast({
+            title: "Credits Depleted",
+            description: "AI credits have been used up. Please add more credits to continue.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw new Error(errorData.error || 'Failed to generate learning plan');
+      }
+
+      const planData = await response.json();
+      setData(planData);
+      
       toast({
         title: "Plan Generated! 🎉",
         description: "Your personalized learning path is ready.",
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Error generating plan:', error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate learning plan. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExport = () => {
