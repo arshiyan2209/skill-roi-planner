@@ -1,4 +1,4 @@
-##🚀 Learning Budget Optimizer: Learn Any Skill in the Most Cost-Effective Way##
+🚀 Learning Budget Optimizer: Learn Any Skill in the Most Cost-Effective Way
 📌 Introduction
 
 Learning a new skill in 2025 is exciting—but also confusing. There are thousands of courses, hundreds of platforms, and prices that range from free to ₹50,000+.
